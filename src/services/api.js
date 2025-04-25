@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
   const role = getRole(); // "admin" or "lead"
   const email = getEmail();
 
-  config.baseURL = `https://crm-backend-d6nj.onrender.comapi/${role}`; // update base per role
+  config.baseURL = `https://crm-backend-d6nj.onrender.com/api/${role}`; // update base per role
   if (token) config.headers.Authorization = `Bearer ${token}`;
   config.headers.email = email;
 
