@@ -1,30 +1,63 @@
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 
+// Login function
 const login = async (req, res) => {
-  const { email } = req.body;
+  const { email, password } = req.body;
 
   try {
     const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) return res.status(401).json({ message: 'Invalid credentials' });
 
-    // Only allow admin and lead to log in
     if (user.role !== 'admin' && user.role !== 'lead') {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    // Login success
     res.status(200).json({
       name: user.name,
       role: user.role,
     });
 
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("Login error:", error.message);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-module.exports = { login };
+// Register function (Easy Version)
+const register = async (req, res) => {
+  const { name, email, password, role } = req.body;
+
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+    });
+
+    await user.save();
+
+    res.status(201).json({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
+
+  } catch (error) {
+    console.error("Registration error:", error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { login, register };
