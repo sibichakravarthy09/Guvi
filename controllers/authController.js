@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
 
 // Login function
 const login = async (req, res) => {
@@ -9,8 +8,10 @@ const login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) return res.status(401).json({ message: 'Invalid credentials' });
+    // Plain text password comparison
+    if (user.password !== password) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
     if (user.role !== 'admin' && user.role !== 'lead') {
       return res.status(403).json({ message: 'Access denied' });
@@ -27,7 +28,7 @@ const login = async (req, res) => {
   }
 };
 
-// Register function (Easy Version)
+// Register function (no bcrypt)
 const register = async (req, res) => {
   const { name, email, password, role } = req.body;
 
@@ -37,12 +38,11 @@ const register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    // Save password as plain text (not recommended for production)
     const user = new User({
       name,
       email,
-      password: hashedPassword,
+      password,
       role,
     });
 
