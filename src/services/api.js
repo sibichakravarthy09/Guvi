@@ -6,7 +6,7 @@ const getEmail = () => localStorage.getItem("userEmail") || "admin123@gmail.com"
 
 // Create Axios instance (base domain only)
 const api = axios.create({
-  baseURL: "https://crm-backend-d6nj.onrender.com/api", // domain only
+  baseURL: "https://guvi-1j1n.onrender.com/api", // domain only
   withCredentials: true,
 });
 
@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
   const role = getRole(); // "admin" or "lead"
   const email = getEmail();
 
-  config.baseURL = `https://crm-backend-d6nj.onrender.com/api/${role}`; // update base per role
+  config.baseURL = `https://guvi-1j1n.onrender.com/api/${role}`; // update base per role
   if (token) config.headers.Authorization = `Bearer ${token}`;
   config.headers.email = email;
 

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const authApi = axios.create({
-  baseURL: "https://crm-backend-d6nj.onrender.com/api/auth",
+  baseURL: "https://guvi-1j1n.onrender.com/api/auth",
   withCredentials: true,
 });
 
