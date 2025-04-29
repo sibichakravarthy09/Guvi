@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { login as loginApi, logout as logoutApi } from "../services/authApi";
+import { login as loginApi, logout as logoutApi, register as registerApi } from "../services/authApi";
 
 export const AuthContext = createContext();
 
@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // ✅ Login without role param
+  // ✅ Login
   const login = async (email, password) => {
     try {
       const userData = await loginApi(email, password); // no role sent
@@ -52,6 +52,33 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ✅ Register
+  const register = async (name, email, password, role) => {
+    try {
+      const userData = await registerApi(name, email, password, role);
+
+      if (!userData?.role) throw new Error("Role missing in backend response");
+
+      setUser(userData);
+      setIsAuthenticated(true);
+      setIsAdmin(userData.role === "admin");
+      setIsLead(userData.role === "lead");
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      // Redirect based on role
+      if (userData.role === "admin") {
+        navigate("/admin-dashboard");
+      } else if (userData.role === "lead") {
+        navigate("/lead-dashboard");
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Registration error:", error.message || error);
+      return false;
+    }
+  };
+
   // ✅ Logout
   const logout = async () => {
     try {
@@ -74,6 +101,7 @@ export const AuthProvider = ({ children }) => {
         user,
         login,
         logout,
+        register, // Expose register function to the context
         loading,
         isAuthenticated,
         isAdmin,

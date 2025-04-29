@@ -71,3 +71,8 @@ body {
 .signup-text a:hover {
   text-decoration: underline;
 }
+.toggle-link {
+  color: blue;
+  cursor: pointer;
+  text-decoration: underline;
+}
