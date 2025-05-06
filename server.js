@@ -14,7 +14,6 @@ app.use(express.json());
 // Update CORS to allow Netlify frontend
 app.use(cors({
   origin: ['http://localhost:3000', 'https://crmestate-frontend.netlify.app'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
 
