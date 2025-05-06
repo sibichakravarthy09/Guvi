@@ -1,40 +1,36 @@
- const User = require("../models/User");
+const User = require("../models/User");
 
+// Auth Middleware: Ensures the user is authenticated and registered
 const authMiddleware = async (req, res, next) => {
-  // Try getting email from headers, body, or query
   const email = req.headers.email || req.body.email || req.query.email;
-
-  console.log("🔹 Received Headers:", req.headers);
-  console.log("🔹 Extracted Email:", email);
 
   if (!email) {
     return res.status(401).json({ message: "Unauthorized: No Email Provided" });
   }
 
   try {
-    const user = await User.findOne({ email });
+    // Check if the user exists
+    let user = await User.findOne({ email });
 
+    // If user doesn't exist, register them as a "user" by default
     if (!user) {
-      console.log("🚨 User Not Found:", email);
-      return res.status(401).json({ message: "Unauthorized: User Not Found" });
+      const { role = 'user' } = req.body;  // Default to 'user' for non-privileged users
+      user = new User({ email, role });
+      await user.save();
     }
 
-    // Block users who are not admin or lead
-    if (user.role !== "admin" && user.role !== "lead") {
-      console.log("🚫 Unauthorized Role:", user.role);
-      return res.status(403).json({ message: "Access denied: Unauthorized role" });
-    }
-
-    // Attach user to request for later use
+    // Attach the user object to the request so it can be used later in the route
     req.user = user;
-    console.log("✅ Authenticated:", user.email, "| Role:", user.role);
-    next();
+    next();  // Proceed to the next middleware/route handler
   } catch (error) {
     console.error("❌ Error in authMiddleware:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+// Role-based middlewares: Ensures only users with specific roles can access certain routes
+
+// Admin-only route middleware
 const isAdmin = (req, res, next) => {
   if (!req.user || req.user.role !== "admin") {
     return res.status(403).json({ message: "Access denied: Admins only" });
@@ -43,6 +39,7 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
+// Lead-only route middleware
 const isLead = (req, res, next) => {
   if (!req.user || req.user.role !== "lead") {
     return res.status(403).json({ message: "Access denied: Leads only" });
@@ -51,12 +48,22 @@ const isLead = (req, res, next) => {
   next();
 };
 
+// Admin or Lead access (used for routes that require either admin or lead)
 const isAdminOrLead = (req, res, next) => {
   if (!req.user || (req.user.role !== "admin" && req.user.role !== "lead")) {
-    return res.status(403).json({ message: "Access denied" });
+    return res.status(403).json({ message: "Access denied: Admins or Leads only" });
   }
   console.log("✅ Admin or Lead Access Granted:", req.user.email);
   next();
 };
 
-module.exports = { authMiddleware, isAdmin, isLead, isAdminOrLead };
+// User or Admin access (used for routes that allow both users and admins)
+const isUserOrAdmin = (req, res, next) => {
+  if (!req.user || (req.user.role !== "admin" && req.user.role !== "user")) {
+    return res.status(403).json({ message: "Access denied: Users and Admins only" });
+  }
+  console.log("✅ User or Admin Access Granted:", req.user.email);
+  next();
+};
+
+module.exports = { authMiddleware, isAdmin, isLead, isAdminOrLead, isUserOrAdmin };

@@ -1,44 +1,44 @@
 const User = require('../models/User');
 
-// Login function
+// ✅ Updated Login function
 const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
-    // Plain text password comparison
-    if (user.password !== password) {
+    if (!user || user.password !== password) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    if (user.role !== 'admin' && user.role !== 'lead') {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
+    // All authenticated users are granted access
     res.status(200).json({
       name: user.name,
+      email: user.email,
       role: user.role,
+      access: 'granted',
     });
-
   } catch (error) {
-    console.error("Login error:", error.message);
+    console.error("Login error:", error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Register function (no bcrypt)
+// ✅ Register function
 const register = async (req, res) => {
   const { name, email, password, role } = req.body;
 
   try {
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Save password as plain text (not recommended for production)
+    // Register the user
     const user = new User({
       name,
       email,
@@ -53,9 +53,8 @@ const register = async (req, res) => {
       email: user.email,
       role: user.role,
     });
-
   } catch (error) {
-    console.error("Registration error:", error.message);
+    console.error("Registration error:", error);
     res.status(500).json({ message: 'Server error' });
   }
 };
