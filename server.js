@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const messageRoutes = require("./routes/messageRoutes");
 
 
 const app = express();
@@ -20,6 +21,7 @@ app.use(cors({
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use("/api/messages", messageRoutes);
 
 
 // Database Connection
