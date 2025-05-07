@@ -1,13 +1,9 @@
 import React, { useState } from "react";
 import {
-  FaUserPlus,
   FaTasks,
-  FaFileInvoice,
-  FaEnvelope,
   FaBell,
   FaCalendarAlt,
   FaCheckCircle,
-  FaExclamationTriangle,
   FaUsers,
   FaChartLine,
   FaMoneyBillAlt,
@@ -32,7 +28,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <h1>Admin Dashboard</h1>
+      <h1>Dashboard</h1>
 
       {/* KPI Snapshot */}
       <div className="kpi-cards">
@@ -55,8 +51,6 @@ const Dashboard = () => {
       </div>
 
       <div className="dashboard-grid">
-        {/* Quick Actions */}
-        
         {/* Task Overview */}
         <div className="task-overview">
           <h2><FaTasks /> Task Overview</h2>

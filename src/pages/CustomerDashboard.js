@@ -1,16 +1,15 @@
 import React from "react";
-import Sidebar from "../components/Sidebar";
-import Navbar from "../components/Navbar";
+import { useAuth } from "../context/AuthContext"; // ✅ Import useAuth
 
 const CustomerDashboard = () => {
+  const { user } = useAuth(); // ✅ Ensure it's correctly used
+
+  if (!user) return <p>Loading...</p>;
+
   return (
-    <div className="dashboard-container">
-      <Sidebar role="customer" />
-      <div className="dashboard-content">
-        <Navbar />
-        <h2>Customer Dashboard</h2>
-        <p>View sales and progress updates.</p>
-      </div>
+    <div>
+      <h1>Welcome customer...</h1>
+
     </div>
   );
 };

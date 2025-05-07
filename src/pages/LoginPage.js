@@ -9,17 +9,19 @@ const LoginPage = () => {
   const [isRegistering, setIsRegistering] = useState(false); // To toggle between login and register forms
   const { login, register } = useAuth(); // Assuming you have a register function in your AuthContext
 
+  // Handle login submission
   const handleLogin = async (e) => {
     e.preventDefault();
-    const success = await login(email, password);
+    const success = await login(email, password); // ✅ Fixed: removed `name`
     if (!success) {
       alert("Login failed! Please check your credentials.");
     }
   };
 
+  // Handle register submission
   const handleRegister = async (e) => {
     e.preventDefault();
-    const success = await register(name, email, password);
+    const success = await register(name, email, password, 'user'); // Setting default role as 'user'
     if (success) {
       alert("Registration successful. Please log in.");
       setIsRegistering(false); // Switch back to login form

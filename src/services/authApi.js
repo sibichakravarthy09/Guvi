@@ -1,11 +1,12 @@
 import axios from "axios";
 
+// ✅ Axios instance
 const authApi = axios.create({
   baseURL: "https://guvi-1j1n.onrender.com/api/auth",
   withCredentials: true,
 });
 
-// ✅ Login function
+// ✅ Login function (FIXED: Removed name)
 export const login = async (email, password) => {
   const res = await authApi.post("/login", { email, password });
   return res.data; // should include role from backend response
@@ -16,7 +17,7 @@ export const logout = async () => {
   await authApi.post("/logout");
 };
 
-// ✅ Register function with retry
+// ✅ Register function with retry (name, email, password, role)
 export const register = async (name, email, password, role) => {
   try {
     const res = await authApi.post("/register", { name, email, password, role });
@@ -28,3 +29,5 @@ export const register = async (name, email, password, role) => {
     return res.data;
   }
 };
+
+export default authApi;

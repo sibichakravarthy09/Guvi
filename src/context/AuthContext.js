@@ -1,6 +1,10 @@
 import { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { login as loginApi, logout as logoutApi, register as registerApi } from "../services/authApi";
+import {
+  login as loginApi,
+  logout as logoutApi,
+  register as registerApi,
+} from "../services/authApi";
 
 export const AuthContext = createContext();
 
@@ -10,9 +14,20 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLead, setIsLead] = useState(false);
+  const [isCustomer, setIsCustomer] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ Load user from localStorage on first load
+  // Centralized redirect logic based on role
+  const redirectToDashboard = (role) => {
+    const routes = {
+      admin: "/admin-dashboard",
+      lead: "/lead-dashboard",
+      customer: "/customer-dashboard",
+    };
+    navigate(routes[role] || "/login");
+  };
+
+  // Load user from localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -21,30 +36,25 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       setIsAdmin(parsedUser.role === "admin");
       setIsLead(parsedUser.role === "lead");
+      setIsCustomer(parsedUser.role === "customer");
     }
     setLoading(false);
   }, []);
 
-  // ✅ Login
+  // Login
   const login = async (email, password) => {
     try {
-      const userData = await loginApi(email, password); // no role sent
-
+      const userData = await loginApi(email, password);
       if (!userData?.role) throw new Error("Role missing in backend response");
 
       setUser(userData);
       setIsAuthenticated(true);
       setIsAdmin(userData.role === "admin");
       setIsLead(userData.role === "lead");
+      setIsCustomer(userData.role === "customer");
       localStorage.setItem("user", JSON.stringify(userData));
 
-      // Redirect based on role
-      if (userData.role === "admin") {
-        navigate("/admin-dashboard");
-      } else if (userData.role === "lead") {
-        navigate("/lead-dashboard");
-      }
-
+      redirectToDashboard(userData.role);
       return true;
     } catch (error) {
       console.error("Login error:", error.message || error);
@@ -52,26 +62,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Register
+  // Register
   const register = async (name, email, password, role) => {
     try {
       const userData = await registerApi(name, email, password, role);
-
       if (!userData?.role) throw new Error("Role missing in backend response");
 
       setUser(userData);
       setIsAuthenticated(true);
       setIsAdmin(userData.role === "admin");
       setIsLead(userData.role === "lead");
+      setIsCustomer(userData.role === "customer");
       localStorage.setItem("user", JSON.stringify(userData));
 
-      // Redirect based on role
-      if (userData.role === "admin") {
-        navigate("/admin-dashboard");
-      } else if (userData.role === "lead") {
-        navigate("/lead-dashboard");
-      }
-
+      redirectToDashboard(userData.role);
       return true;
     } catch (error) {
       console.error("Registration error:", error.message || error);
@@ -79,21 +83,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Logout
+  // Logout
   const logout = async () => {
     try {
       await logoutApi();
     } catch (err) {
       console.warn("Logout error (ignored):", err.message || err);
     }
-
     localStorage.removeItem("user");
     setUser(null);
     setIsAuthenticated(false);
     setIsAdmin(false);
     setIsLead(false);
+    setIsCustomer(false);
     navigate("/login");
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <AuthContext.Provider
@@ -101,11 +109,12 @@ export const AuthProvider = ({ children }) => {
         user,
         login,
         logout,
-        register, // Expose register function to the context
+        register,
         loading,
         isAuthenticated,
         isAdmin,
         isLead,
+        isCustomer,
       }}
     >
       {children}

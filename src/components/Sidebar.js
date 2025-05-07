@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom"; 
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Sidebar.css";
 import {
@@ -23,8 +23,8 @@ const Sidebar = () => {
     }
   };
 
-  // Only show sidebar for admin or lead roles
-  if (!user || (user.role !== "admin" && user.role !== "lead")) {
+  // Only show sidebar for admin, lead, or customer roles
+  if (!user) {
     return null;
   }
 
@@ -61,6 +61,11 @@ const Sidebar = () => {
                 </NavLink>
               </li>
               <li>
+                <NavLink to="/admin/messages" className={({ isActive }) => (isActive ? "active" : "")}>
+                  <FaEnvelope /> Message
+                </NavLink>
+              </li>
+              <li>
                 <NavLink to="/admin/emails" className={({ isActive }) => (isActive ? "active" : "")}>
                   <FaEnvelope /> Emails
                 </NavLink>
@@ -80,7 +85,6 @@ const Sidebar = () => {
                   <FaTachometerAlt /> Dashboard
                 </NavLink>
               </li>
-              
               <li>
                 <NavLink to="/lead/tasks" className={({ isActive }) => (isActive ? "active" : "")}>
                   <FaTasks /> Tasks
@@ -98,6 +102,31 @@ const Sidebar = () => {
               </li>
               <li>
                 <NavLink to="/lead/analytics" className={({ isActive }) => (isActive ? "active" : "")}>
+                  <FaChartBar /> Analytics
+                </NavLink>
+              </li>
+            </>
+          )}
+
+          {user.role === "user" && (
+            <>
+              <li>
+                <NavLink to="/customer/dashboard" className={({ isActive }) => (isActive ? "active" : "")}>
+                  <FaTachometerAlt /> Dashboard
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/customer/property" className={({ isActive }) => (isActive ? "active" : "")}>
+                  Property
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/customer/message" className={({ isActive }) => (isActive ? "active" : "")}>
+                  <FaEnvelope /> Message
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/customer/analytics" className={({ isActive }) => (isActive ? "active" : "")}>
                   <FaChartBar /> Analytics
                 </NavLink>
               </li>

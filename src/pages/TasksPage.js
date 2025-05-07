@@ -1,4 +1,5 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import axios from "axios";
 import { TaskContext } from "../context/TaskContext";
 import "../styles/Tasks.css";
 
@@ -7,17 +8,36 @@ const Tasks = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [error, setError] = useState(null);
-  const [taskData, setTaskData] = useState({ 
-    title: "", 
-    description: "", 
-    status: "pending", 
-    assignedTo: "" 
+  const [taskData, setTaskData] = useState({
+    title: "",
+    description: "",
+    status: "pending",
+    assignedTo: "",
   });
+  const [leads, setLeads] = useState([]);
+
+  // Fetch leads on component mount
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/leads");
+        setLeads(res.data);
+      } catch (err) {
+        console.error("Failed to fetch leads", err);
+      }
+    };
+    fetchLeads();
+  }, []);
 
   const handleOpenModal = (task = null) => {
-    setError(null); 
+    setError(null);
     setEditingTask(task);
-    setTaskData(task ? task : { title: "", description: "", status: "pending", assignedTo: "" });
+    setTaskData(task ? task : {
+      title: "",
+      description: "",
+      status: "pending",
+      assignedTo: "",
+    });
     setShowModal(true);
   };
 
@@ -26,7 +46,7 @@ const Tasks = () => {
       setError("Title and Description are required.");
       return;
     }
-    
+
     try {
       if (editingTask) {
         await editTask(editingTask._id, taskData);
@@ -84,19 +104,20 @@ const Tasks = () => {
               <option value="in-progress">In Progress</option>
               <option value="completed">Completed</option>
             </select>
-            <input
-              type="text"
-              placeholder="Assigned To (User ID)"
+            <select
               value={taskData.assignedTo}
               onChange={(e) => setTaskData({ ...taskData, assignedTo: e.target.value })}
-            />
+            >
+              <option value="">Assign to Lead</option>
+              {leads.map((lead) => (
+                <option key={lead._id} value={lead.name}>
+                  {lead.name}
+                </option>
+              ))}
+            </select>
             <div className="modal-actions">
               <button className="cancel-btn" onClick={() => setShowModal(false)}>Cancel</button>
-              <button 
-                className="save-btn" 
-                onClick={handleSaveTask} 
-                disabled={!taskData.title.trim() || !taskData.description.trim()}
-              >
+              <button className="save-btn" onClick={handleSaveTask}>
                 Save
               </button>
             </div>
