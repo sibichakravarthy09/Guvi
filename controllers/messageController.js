@@ -5,6 +5,11 @@ exports.createMessage = async (req, res) => {
   try {
     const { title, propertyType, description, userId, userName } = req.body;
 
+    // Simple validation
+    if (!title || !propertyType || !description || !userId || !userName) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
     const newMessage = new Message({
       title,
       propertyType,
@@ -25,6 +30,11 @@ exports.createMessage = async (req, res) => {
 exports.getAllMessages = async (req, res) => {
   try {
     const messages = await Message.find().sort({ createdAt: -1 });
+
+    if (!messages || messages.length === 0) {
+      return res.status(404).json({ message: "No messages found" });
+    }
+
     res.status(200).json(messages);
   } catch (error) {
     console.error("Error fetching messages:", error);
@@ -37,6 +47,10 @@ exports.replyToMessage = async (req, res) => {
   try {
     const { id } = req.params;
     const { reply } = req.body;
+
+    if (!reply) {
+      return res.status(400).json({ error: "Reply is required" });
+    }
 
     const message = await Message.findById(id);
     if (!message) {
