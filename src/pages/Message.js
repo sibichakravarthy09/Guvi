@@ -12,12 +12,13 @@ const Message = () => {
   const [error, setError] = useState("");
   const [enquiries, setEnquiries] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [reply, setReply] = useState("");
+  const [replies, setReplies] = useState({}); // reply per enquiry
 
+  // Submit a new enquiry
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("/api/messages", {
+      await axios.post("https://guvi-1j1n.onrender.com/api/messages", {
         title,
         propertyType,
         description,
@@ -35,19 +36,31 @@ const Message = () => {
     }
   };
 
-  const handleReply = async (enquiryId) => {
+  // Send a reply to a specific enquiry
+  const handleReply = async (enquiryId, replyText) => {
+    if (!replyText) {
+      setError("Reply cannot be empty.");
+      return;
+    }
     try {
-      await axios.put(`/api/messages/${enquiryId}/reply`, { reply });
-      setReply("");  // Clear reply input after submission
-      fetchEnquiries();  // Refresh the list after replying
+      await axios.put(
+        `https://guvi-1j1n.onrender.com/api/messages/${enquiryId}/reply`,
+        { reply: replyText }
+      );
+      setReplies((prev) => ({ ...prev, [enquiryId]: "" }));
+      fetchEnquiries();
+      setSuccessMessage("Reply sent successfully.");
+      setError("");
     } catch (err) {
       console.error("Error replying to message:", err);
+      setError("Failed to send reply.");
     }
   };
 
+  // Fetch enquiries for admin
   const fetchEnquiries = async () => {
     try {
-      const response = await axios.get("/api/messages");
+      const response = await axios.get("https://guvi-1j1n.onrender.com/api/messages");
       setEnquiries(response.data);
     } catch (err) {
       console.error("Error fetching messages:", err);
@@ -62,10 +75,10 @@ const Message = () => {
 
   return (
     <div className="message-container">
-      <h2>Messages</h2>
+      <h2>{user.role === "admin" ? "Customer Enquiries" : "Your Enquiry Page"}</h2>
 
-      {/* For customers only – Enquiry Button */}
-      {user.role === "customer" && (
+      {/* Enquiry Form for User */}
+      {user.role === "user" && (
         <>
           <button className="enquiry-btn" onClick={() => setShowModal(true)}>
             Make Enquiry
@@ -80,10 +93,19 @@ const Message = () => {
                 {successMessage && <p className="success">{successMessage}</p>}
                 <form onSubmit={handleSubmit}>
                   <label>Title:</label>
-                  <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                  
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                  />
+
                   <label>Property Type:</label>
-                  <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} required>
+                  <select
+                    value={propertyType}
+                    onChange={(e) => setPropertyType(e.target.value)}
+                    required
+                  >
                     <option value="">Select Property Type</option>
                     <option value="Empty Land">Empty Land</option>
                     <option value="Agriculture Land">Agriculture Land</option>
@@ -93,7 +115,11 @@ const Message = () => {
                   </select>
 
                   <label>Description:</label>
-                  <textarea value={description} onChange={(e) => setDescription(e.target.value)} required />
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    required
+                  />
 
                   <button type="submit">Submit Enquiry</button>
                 </form>
@@ -103,10 +129,9 @@ const Message = () => {
         </>
       )}
 
-      {/* For admins – Show messages list */}
+      {/* Admin Enquiry Management */}
       {user.role === "admin" && (
         <div className="enquiry-list">
-          <h3>Customer Enquiries</h3>
           {enquiries.length === 0 ? (
             <p>No enquiries found.</p>
           ) : (
@@ -117,15 +142,23 @@ const Message = () => {
                 <p><strong>Type:</strong> {enquiry.propertyType}</p>
                 <p><strong>Description:</strong> {enquiry.description}</p>
 
-                {/* Admin Reply Section */}
                 <div className="reply-section">
                   <label>Reply:</label>
                   <textarea
-                    value={reply}
-                    onChange={(e) => setReply(e.target.value)}
+                    value={replies[enquiry._id] || ""}
+                    onChange={(e) =>
+                      setReplies((prev) => ({
+                        ...prev,
+                        [enquiry._id]: e.target.value,
+                      }))
+                    }
                     placeholder="Type your reply here..."
                   />
-                  <button onClick={() => handleReply(enquiry._id)}>Reply</button>
+                  <button
+                    onClick={() => handleReply(enquiry._id, replies[enquiry._id])}
+                  >
+                    Reply
+                  </button>
                 </div>
 
                 {enquiry.reply && (

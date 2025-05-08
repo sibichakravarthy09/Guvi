@@ -10,6 +10,7 @@ import {
   FaEnvelope,
   FaChartBar,
   FaSignOutAlt,
+  FaHome,
 } from "react-icons/fa";
 
 const Sidebar = () => {
@@ -23,10 +24,15 @@ const Sidebar = () => {
     }
   };
 
-  // Only show sidebar for admin, lead, or customer roles
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
+
+  const renderNavLink = (to, icon, label) => (
+    <li>
+      <NavLink to={to} className={({ isActive }) => (isActive ? "active" : "")}>
+        {icon} {label}
+      </NavLink>
+    </li>
+  );
 
   return (
     <div className="sidebar">
@@ -35,101 +41,33 @@ const Sidebar = () => {
         <ul>
           {user.role === "admin" && (
             <>
-              <li>
-                <NavLink to="/admin/dashboard" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaTachometerAlt /> Dashboard
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/admin/leads" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaUserPlus /> Leads
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/admin/customers" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaUsers /> Customers
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/admin/tasks" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaTasks /> Tasks
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/admin/sales" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaDollarSign /> Sales
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/admin/messages" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaEnvelope /> Message
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/admin/emails" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaEnvelope /> Emails
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/admin/analytics" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaChartBar /> Analytics
-                </NavLink>
-              </li>
+              {renderNavLink("/admin/dashboard", <FaTachometerAlt />, "Dashboard")}
+              {renderNavLink("/admin/leads", <FaUserPlus />, "Leads")}
+              {renderNavLink("/admin/customers", <FaUsers />, "Customers")}
+              {renderNavLink("/admin/tasks", <FaTasks />, "Tasks")}
+              {renderNavLink("/admin/sales", <FaDollarSign />, "Sales")}
+              {renderNavLink("/admin/message", <FaEnvelope />, "Message")}
+              {renderNavLink("/admin/emails", <FaEnvelope />, "Emails")}
+              {renderNavLink("/admin/analytics", <FaChartBar />, "Analytics")}
             </>
           )}
 
           {user.role === "lead" && (
             <>
-              <li>
-                <NavLink to="/lead/dashboard" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaTachometerAlt /> Dashboard
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/lead/tasks" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaTasks /> Tasks
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/lead/sales" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaDollarSign /> Sales
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/lead/emails" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaEnvelope /> Emails
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/lead/analytics" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaChartBar /> Analytics
-                </NavLink>
-              </li>
+              {renderNavLink("/lead/dashboard", <FaTachometerAlt />, "Dashboard")}
+              {renderNavLink("/lead/tasks", <FaTasks />, "Tasks")}
+              {renderNavLink("/lead/sales", <FaDollarSign />, "Sales")}
+              {renderNavLink("/lead/emails", <FaEnvelope />, "Emails")}
+              {renderNavLink("/lead/analytics", <FaChartBar />, "Analytics")}
             </>
           )}
 
           {user.role === "user" && (
             <>
-              <li>
-                <NavLink to="/customer/dashboard" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaTachometerAlt /> Dashboard
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/customer/property" className={({ isActive }) => (isActive ? "active" : "")}>
-                  Property
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/customer/message" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaEnvelope /> Message
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/customer/analytics" className={({ isActive }) => (isActive ? "active" : "")}>
-                  <FaChartBar /> Analytics
-                </NavLink>
-              </li>
+              {renderNavLink("/customer/dashboard", <FaTachometerAlt />, "Dashboard")}
+              {renderNavLink("/customer/property", <FaHome />, "Property")}
+              {renderNavLink("/customer/message", <FaEnvelope />, "Message")}
+              {renderNavLink("/customer/analytics", <FaChartBar />, "Analytics")}
             </>
           )}
         </ul>

@@ -60,6 +60,7 @@ function App() {
           <Route path="customers" element={<Customers />} />
           <Route path="tasks" element={<Tasks />} />
           <Route path="sales" element={<Sales />} />
+          <Route path="property" element={<Property />} />
           <Route path="message" element={<Message />} />
           <Route path="emails" element={<Emails />} />
           <Route path="analytics" element={<Analytics />} />

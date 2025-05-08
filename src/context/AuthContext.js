@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       setIsAdmin(userData.role === "admin");
       setIsLead(userData.role === "lead");
-      setIsCustomer(userData.role === "customer");
+      setIsCustomer(userData.role === "user");
       localStorage.setItem("user", JSON.stringify(userData));
 
       redirectToDashboard(userData.role);
