@@ -9,9 +9,11 @@ const Analytics = require('../models/Analytics');
 // Generic CRUD function generator
 const createEntity = (Model) => async (req, res) => {
   try {
+    console.log('Received body:', req.body);
     const entity = await Model.create(req.body);
     res.status(201).json(entity);
   } catch (error) {
+    console.error(`Error creating ${Model.modelName}:`, error); 
     res.status(500).json({ message: `Error creating ${Model.modelName}` });
   }
 };
