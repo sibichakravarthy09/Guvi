@@ -4,21 +4,19 @@ const Task = require('../models/Task');
 const Sale = require('../models/Sale');
 const Email = require('../models/Email');
 const Analytics = require('../models/Analytics');
-
+const Worker = require('../models/Worker');
 
 // Generic CRUD function generator
 const createEntity = (Model) => async (req, res) => {
   try {
-    console.log('Received body:', req.body);
     const entity = await Model.create(req.body);
     res.status(201).json(entity);
   } catch (error) {
-    console.error(`Error creating ${Model.modelName}:`, error); 
+    console.error(`Error creating ${Model.modelName}:`, error);
     res.status(500).json({ message: `Error creating ${Model.modelName}` });
   }
 };
 
-// Get all entities, with optional population
 const getEntities = (Model, populateFields = []) => async (req, res) => {
   try {
     let query = Model.find();
@@ -52,33 +50,147 @@ const deleteEntity = (Model) => async (req, res) => {
   }
 };
 
-// CRUD handlers
-const createLead = createEntity(Lead);
-const getLeads = getEntities(Lead);
-const updateLead = updateEntity(Lead);
-const deleteLead = deleteEntity(Lead);
+// Task-specific logic
+const createTask = async (req, res) => {
+  try {
+    let { customer, worker } = req.body;
 
-const createCustomer = createEntity(Customer);
-const getCustomers = getEntities(Customer);
-const updateCustomer = updateEntity(Customer);
-const deleteCustomer = deleteEntity(Customer);
+    // Normalize customer and worker IDs
+    if (customer && typeof customer === 'object' && customer._id) {
+      customer = customer._id;
+    }
+    if (worker && typeof worker === 'object' && worker._id) {
+      worker = worker._id;
+    }
 
-const createTask = createEntity(Task);
-const getTasks = getEntities(Task);
-const updateTask = updateEntity(Task);
-const deleteTask = deleteEntity(Task);
+    const task = await Task.create({
+      ...req.body,
+      customer,
+      worker
+    });
 
+    // Associate task with customer
+    if (customer) {
+      await Customer.findByIdAndUpdate(customer, {
+        $push: { tasks: task._id }
+      });
+    }
+
+    // Associate task with worker
+    if (worker) {
+      await Worker.findByIdAndUpdate(worker, {
+        $push: { tasks: task._id }
+      });
+    }
+
+    res.status(201).json(task);
+  } catch (error) {
+    console.error("Error creating task:", error);
+    res.status(500).json({ message: "Failed to create task" });
+  }
+};
+
+const getTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find().populate('customer').populate('worker');
+    res.status(200).json(tasks);
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    res.status(500).json({ message: "Failed to fetch tasks" });
+  }
+};
+
+const updateTask = async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    let { customer, worker } = req.body;
+
+    // Normalize incoming data
+    if (customer && typeof customer === 'object' && customer._id) {
+      customer = customer._id;
+    }
+    if (worker && typeof worker === 'object' && worker._id) {
+      worker = worker._id;
+    }
+
+    const existingTask = await Task.findById(taskId);
+    if (!existingTask) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // Update references if changed
+    if (existingTask.customer?.toString() !== customer) {
+      if (existingTask.customer) {
+        await Customer.findByIdAndUpdate(existingTask.customer, {
+          $pull: { tasks: taskId }
+        });
+      }
+      if (customer) {
+        await Customer.findByIdAndUpdate(customer, {
+          $push: { tasks: taskId }
+        });
+      }
+    }
+
+    if (existingTask.worker?.toString() !== worker) {
+      if (existingTask.worker) {
+        await Worker.findByIdAndUpdate(existingTask.worker, {
+          $pull: { tasks: taskId }
+        });
+      }
+      if (worker) {
+        await Worker.findByIdAndUpdate(worker, {
+          $push: { tasks: taskId }
+        });
+      }
+    }
+
+    const updatedTask = await Task.findByIdAndUpdate(taskId, {
+      ...req.body,
+      customer,
+      worker
+    }, { new: true });
+
+    res.status(200).json(updatedTask);
+  } catch (error) {
+    console.error("Error updating task:", error);
+    res.status(500).json({ message: "Failed to update task" });
+  }
+};
+
+const deleteTask = async (req, res) => {
+  try {
+    const task = await Task.findByIdAndDelete(req.params.id);
+
+    if (task?.customer) {
+      await Customer.findByIdAndUpdate(task.customer, {
+        $pull: { tasks: task._id }
+      });
+    }
+
+    if (task?.worker) {
+      await Worker.findByIdAndUpdate(task.worker, {
+        $pull: { tasks: task._id }
+      });
+    }
+
+    res.status(200).json({ message: "Task deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting task:", error);
+    res.status(500).json({ message: "Failed to delete task" });
+  }
+};
+
+// Sale-specific logic
 const createSale = async (req, res) => {
   try {
     let customerId = req.body.customer;
     let customerName = 'N/A';
 
-    // Handle if customer is sent as an object (e.g., from a dropdown)
     if (customerId && typeof customerId === 'object' && customerId._id) {
       customerId = customerId._id;
     }
 
-    // Fetch customer's name from DB
     if (customerId) {
       const customer = await Customer.findById(customerId);
       if (customer?.name) {
@@ -86,17 +198,15 @@ const createSale = async (req, res) => {
       }
     }
 
-    // Create the sale with the customer ID and name
     const sale = await Sale.create({
       ...req.body,
-      customer: customerId,   // Ensure only the ID is saved
-      customerName,           // Save snapshot of customer name
+      customer: customerId,
+      customerName
     });
 
-    // Optional: Update customer's purchase history
     if (customerId) {
       await Customer.findByIdAndUpdate(customerId, {
-        $push: { purchaseHistory: sale._id },
+        $push: { purchaseHistory: sale._id }
       });
     }
 
@@ -107,10 +217,6 @@ const createSale = async (req, res) => {
   }
 };
 
-
-
-
-// Get all sales with populated customer data
 const getSales = async (req, res) => {
   try {
     const sales = await Sale.find().populate("customer");
@@ -121,13 +227,11 @@ const getSales = async (req, res) => {
   }
 };
 
-// Update a sale and update customer's purchase history if changed
 const updateSale = async (req, res) => {
   try {
     const saleId = req.params.id;
     let newCustomerId = req.body.customer;
 
-    // Handle customer object sent from frontend
     if (newCustomerId && typeof newCustomerId === 'object' && newCustomerId._id) {
       newCustomerId = newCustomerId._id;
       req.body.customer = newCustomerId;
@@ -138,7 +242,6 @@ const updateSale = async (req, res) => {
       return res.status(404).json({ message: "Sale not found" });
     }
 
-    // If customer changed, update both old and new customer's purchase history
     if (existingSale.customer?.toString() !== newCustomerId) {
       if (existingSale.customer) {
         await Customer.findByIdAndUpdate(existingSale.customer, {
@@ -164,8 +267,6 @@ const updateSale = async (req, res) => {
   }
 };
 
-
-// Delete a sale and remove it from customer's purchase history
 const deleteSale = async (req, res) => {
   try {
     const sale = await Sale.findByIdAndDelete(req.params.id);
@@ -183,34 +284,25 @@ const deleteSale = async (req, res) => {
   }
 };
 
+// Emails
 const createEmail = createEntity(Email);
 const getEmails = getEntities(Email);
 const updateEmail = updateEntity(Email);
 const deleteEmail = deleteEntity(Email);
 
-// 📦 Get purchase history by customer name
-const getPurchaseHistoryByCustomerName = async (req, res) => {
-  try {
-    const customerName = req.params.name;
+// Leads
+const createLead = createEntity(Lead);
+const getLeads = getEntities(Lead);
+const updateLead = updateEntity(Lead);
+const deleteLead = deleteEntity(Lead);
 
-    // Step 1: Find the customer by name
-    const customer = await Customer.findOne({ name: customerName });
+// Customers
+const createCustomer = createEntity(Customer);
+const getCustomers = getEntities(Customer);
+const updateCustomer = updateEntity(Customer);
+const deleteCustomer = deleteEntity(Customer);
 
-    if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
-    }
-
-    // Step 2: Find all sales associated with this customer
-    const purchaseHistory = await Sale.find({ customer: customer._id }).populate("customer");
-
-    res.status(200).json(purchaseHistory);
-  } catch (err) {
-    console.error("Error fetching purchase history:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-// 📊 Analytics summary
+// Analytics
 const getAnalytics = async (req, res) => {
   try {
     const analyticsData = {
@@ -246,6 +338,24 @@ const getAnalytics = async (req, res) => {
   }
 };
 
+// Purchase history by customer name
+const getPurchaseHistoryByCustomerName = async (req, res) => {
+  try {
+    const customerName = req.params.name;
+    const customer = await Customer.findOne({ name: customerName });
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    const purchaseHistory = await Sale.find({ customer: customer._id }).populate("customer");
+    res.status(200).json(purchaseHistory);
+  } catch (err) {
+    console.error("Error fetching purchase history:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   createLead, getLeads, updateLead, deleteLead,
   createCustomer, getCustomers, updateCustomer, deleteCustomer,
@@ -253,6 +363,5 @@ module.exports = {
   createSale, getSales, updateSale, deleteSale,
   createEmail, getEmails, updateEmail, deleteEmail,
   getAnalytics,
-  getPurchaseHistoryByCustomerName, // ✅ This will now work
+  getPurchaseHistoryByCustomerName
 };
-
