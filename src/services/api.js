@@ -6,7 +6,7 @@ const getEmail = () => localStorage.getItem("userEmail") || "admin123@gmail.com"
 
 // Create Axios instance (base domain only)
 const api = axios.create({
-  baseURL: "https://guvi-1j1n.onrender.com/api", // domain only
+  baseURL: "https://guvi-1j1n.onrender.com/api", // base domain only
   withCredentials: true,
 });
 
@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
   const role = getRole(); // "admin" or "lead"
   const email = getEmail();
 
-  config.baseURL = `https://guvi-1j1n.onrender.com/api/${role}`; // update base per role
+  config.baseURL = `https://guvi-1j1n.onrender.com/api/${role}`; // update baseURL per role
   if (token) config.headers.Authorization = `Bearer ${token}`;
   config.headers.email = email;
 
@@ -24,6 +24,7 @@ api.interceptors.request.use((config) => {
 });
 
 // ----------- AUTH ------------
+
 export const login = async (email, password, role = "admin") => {
   try {
     const response = await api.post("/auth/login", { email, password });
@@ -47,42 +48,111 @@ export const logout = async () => {
 };
 
 // ----------- DASHBOARD ------------
+
 export const fetchDashboardData = async () => {
   const res = await api.get("/dashboard");
   return res.data;
 };
 
 // ----------- LEADS ------------
-export const fetchLeads = () => api.get("/leads").then(res => res.data);
-export const addLead = (lead) => api.post("/leads", lead).then(res => res.data);
-export const updateLead = (id, data) => api.put(`/leads/${id}`, data).then(res => res.data);
-export const deleteLead = (id) => api.delete(`/leads/${id}`).then(res => res.data);
+
+export const fetchLeads = async () => {
+  const res = await api.get("/leads");
+  return res.data;
+};
+export const addLead = async (lead) => {
+  const res = await api.post("/leads", lead);
+  return res.data;
+};
+export const updateLead = async (id, data) => {
+  const res = await api.put(`/leads/${id}`, data);
+  return res.data;
+};
+export const deleteLead = async (id) => {
+  const res = await api.delete(`/leads/${id}`);
+  return res.data;
+};
 
 // ----------- CUSTOMERS ------------
-export const fetchCustomers = () => api.get("/customers").then(res => res.data);
-export const addNewCustomer = (customer) => api.post("/customers", customer).then(res => res.data);
-export const updateCustomer = (id, data) => api.put(`/customers/${id}`, data).then(res => res.data);
-export const deleteCustomer = (id) => api.delete(`/customers/${id}`).then(res => res.data);
+
+// Fetch customers based on the logged-in user's email
+export const fetchCustomers = async () => {
+  const email = getEmail();
+  const res = await api.get(`/customers?email=${email}`);
+  return res.data;
+};
+export const addNewCustomer = async (customer) => {
+  const res = await api.post("/customers", customer);
+  return res.data;
+};
+export const updateCustomer = async (id, data) => {
+  const res = await api.put(`/customers/${id}`, data);
+  return res.data;
+};
+export const deleteCustomer = async (id) => {
+  const res = await api.delete(`/customers/${id}`);
+  return res.data;
+};
 
 // ----------- TASKS ------------
-export const fetchTasks = () => api.get("/tasks").then(res => res.data);
-export const addTask = (task) => api.post("/tasks", task).then(res => res.data);
-export const updateTask = (id, data) => api.put(`/tasks/${id}`, data).then(res => res.data);
-export const deleteTask = (id) => api.delete(`/tasks/${id}`).then(res => res.data);
+
+export const fetchTasks = async () => {
+  const res = await api.get("/tasks");
+  return res.data;
+};
+export const addTask = async (task) => {
+  const res = await api.post("/tasks", task);
+  return res.data;
+};
+export const updateTask = async (id, data) => {
+  const res = await api.put(`/tasks/${id}`, data);
+  return res.data;
+};
+export const deleteTask = async (id) => {
+  const res = await api.delete(`/tasks/${id}`);
+  return res.data;
+};
 
 // ----------- SALES ------------
-export const fetchSales = () => api.get("/sales").then(res => res.data);
-export const createSale = (sale) => api.post("/sales", sale).then(res => res.data);
-export const updateSale = (id, data) => api.put(`/sales/${id}`, data).then(res => res.data);
-export const deleteSale = (id) => api.delete(`/sales/${id}`);
+
+export const fetchSales = async () => {
+  const res = await api.get("/sales");
+  return res.data;
+};
+export const createSale = async (sale) => {
+  const res = await api.post("/sales", sale);
+  return res.data;
+};
+export const updateSale = async (id, data) => {
+  const res = await api.put(`/sales/${id}`, data);
+  return res.data;
+};
+export const deleteSale = async (id) => {
+  const res = await api.delete(`/sales/${id}`);
+  return res.data;
+};
 
 // ----------- EMAILS ------------
-export const fetchEmails = () => api.get("/emails").then(res => res.data);
-export const sendEmail = (email) => api.post("/emails", email).then(res => res.data);
-export const updateEmail = (id, data) => api.put(`/emails/${id}`, data).then(res => res.data);
-export const deleteEmail = (id) => api.delete(`/emails/${id}`).then(res => res.data);
+
+export const fetchEmails = async () => {
+  const res = await api.get("/emails");
+  return res.data;
+};
+export const sendEmail = async (email) => {
+  const res = await api.post("/emails", email);
+  return res.data;
+};
+export const updateEmail = async (id, data) => {
+  const res = await api.put(`/emails/${id}`, data);
+  return res.data;
+};
+export const deleteEmail = async (id) => {
+  const res = await api.delete(`/emails/${id}`);
+  return res.data;
+};
 
 // ----------- ANALYTICS ------------
+
 export const fetchAnalytics = async () => {
   try {
     const response = await api.get("/analytics");

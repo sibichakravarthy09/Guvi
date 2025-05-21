@@ -9,7 +9,6 @@ export const SalesProvider = ({ children }) => {
   const [sales, setSales] = useState([]);
   const [isFetching, setIsFetching] = useState(false);
 
-  // ✅ Fetch sales
   const loadSales = useCallback(async () => {
     if (loading) return;
     if (!user) {
@@ -19,7 +18,6 @@ export const SalesProvider = ({ children }) => {
 
     setIsFetching(true);
     try {
-      console.log("Fetching sales...");
       const data = await fetchSales();
       setSales(data);
     } catch (error) {
@@ -29,7 +27,7 @@ export const SalesProvider = ({ children }) => {
     }
   }, [user, loading]);
 
-  // ✅ Create a new sale
+  // Create a new sale
   const addNewSale = async (saleData) => {
     try {
       const newSale = await createSale(saleData);
@@ -39,8 +37,8 @@ export const SalesProvider = ({ children }) => {
     }
   };
 
-  // ✅ Update a sale
-  const editSale = async (id, updatedSale) => {
+  // Update a sale — rename to updateSale to keep naming consistent
+  const updateSaleById = async (id, updatedSale) => {
     try {
       const updated = await updateSale(id, updatedSale);
       setSales((prev) => prev.map((sale) => (sale._id === id ? updated : sale)));
@@ -49,8 +47,8 @@ export const SalesProvider = ({ children }) => {
     }
   };
 
-  // ✅ Delete a sale
-  const removeSale = async (id) => {
+  // Delete a sale — rename to deleteSale to keep naming consistent
+  const deleteSaleById = async (id) => {
     try {
       await deleteSale(id);
       setSales((prev) => prev.filter((sale) => sale._id !== id));
@@ -59,14 +57,21 @@ export const SalesProvider = ({ children }) => {
     }
   };
 
-  // ✅ Load sales on mount
   useEffect(() => {
     loadSales();
   }, [loadSales]);
 
   return (
-    <SalesContext.Provider value={{ sales, isFetching, loadSales, addNewSale, updateSale: editSale, removeSale }}>
-
+    <SalesContext.Provider
+      value={{
+        sales,
+        isFetching,
+        loadSales,
+        addNewSale,
+        updateSale: updateSaleById,
+        deleteSale: deleteSaleById,
+      }}
+    >
       {children}
     </SalesContext.Provider>
   );

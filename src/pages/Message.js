@@ -52,25 +52,22 @@ const Message = () => {
       setSuccessMessage("Reply sent successfully.");
       setError("");
     } catch (err) {
-      console.error("Error replying to message:", err);
       setError("Failed to send reply.");
     }
   };
 
-  // Fetch enquiries for admin
+  // Fetch enquiries for customer or admin
   const fetchEnquiries = async () => {
     try {
       const response = await axios.get("https://guvi-1j1n.onrender.com/api/messages");
       setEnquiries(response.data);
     } catch (err) {
-      console.error("Error fetching messages:", err);
+      setError("Failed to fetch enquiries.");
     }
   };
 
   useEffect(() => {
-    if (user.role === "admin") {
-      fetchEnquiries();
-    }
+    fetchEnquiries();
   }, [user]);
 
   return (
@@ -129,7 +126,33 @@ const Message = () => {
         </>
       )}
 
-      {/* Admin Enquiry Management */}
+      {/* Enquiries Display for Customer or Admin */}
+      {user.role === "user" && (
+        <div className="enquiry-list">
+          {enquiries.length === 0 ? (
+            <p>No enquiries found.</p>
+          ) : (
+            enquiries.map((enquiry) => (
+              <div key={enquiry._id} className="enquiry-card">
+                <h4>{enquiry.title}</h4>
+                <p><strong>From:</strong> {enquiry.userName}</p>
+                <p><strong>Type:</strong> {enquiry.propertyType}</p>
+                <p><strong>Description:</strong> {enquiry.description}</p>
+
+                {/* Display Reply if Available */}
+                {enquiry.reply && (
+                  <div className="reply">
+                    <strong>Admin Reply:</strong>
+                    <p>{enquiry.reply}</p>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Admin Reply Section */}
       {user.role === "admin" && (
         <div className="enquiry-list">
           {enquiries.length === 0 ? (
@@ -161,6 +184,7 @@ const Message = () => {
                   </button>
                 </div>
 
+                {/* Display Admin's reply */}
                 {enquiry.reply && (
                   <div className="reply">
                     <strong>Admin Reply:</strong>

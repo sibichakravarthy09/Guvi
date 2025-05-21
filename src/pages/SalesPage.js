@@ -9,7 +9,7 @@ const bottomStages = ["Negotiation", "Closed"];
 
 const SalesPage = () => {
   const { sales = [], addNewSale, deleteSale, updateSale } = useSales();
-  const { customers = [], loadCustomers } = useCustomers();
+  const { customers = [], loadCustomers, isFetching: isCustomersFetching } = useCustomers();
 
   const [formData, setFormData] = useState({
     dealName: "",
@@ -24,7 +24,7 @@ const SalesPage = () => {
 
   useEffect(() => {
     loadCustomers();
-  }, []);
+  }, [loadCustomers]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -63,9 +63,13 @@ const SalesPage = () => {
   };
 
   const handleEdit = (sale) => {
+    let customerId = "";
+    if (sale.customer) {
+      customerId = typeof sale.customer === "object" ? sale.customer._id : sale.customer;
+    }
     setFormData({
       dealName: sale.dealName,
-      customer: typeof sale.customer === "object" ? sale.customer._id : sale.customer,
+      customer: customerId,
       amount: sale.amount,
       stage: sale.stage,
     });
@@ -87,6 +91,7 @@ const SalesPage = () => {
   };
 
   const getCustomerNameById = (customerId) => {
+    if (!customerId) return "N/A";
     const customer = customers.find((c) => c._id === customerId);
     return customer ? customer.name : "N/A";
   };
@@ -116,12 +121,14 @@ const SalesPage = () => {
                         <button
                           className="edit-btn"
                           onClick={() => handleEdit(sale)}
+                          type="button"
                         >
                           ✏️
                         </button>
                         <button
                           className="delete-btn"
                           onClick={() => handleDelete(sale._id)}
+                          type="button"
                         >
                           🗑️
                         </button>
@@ -131,9 +138,11 @@ const SalesPage = () => {
                     <p>Value: ₹{sale.amount}</p>
                     <p>
                       Customer:{" "}
-                      {typeof sale.customer === "object"
-                        ? sale.customer?.name || "N/A"
-                        : getCustomerNameById(sale.customer)}
+                      {sale.customer
+                        ? typeof sale.customer === "object"
+                          ? sale.customer.name || "N/A"
+                          : getCustomerNameById(sale.customer)
+                        : "N/A"}
                     </p>
                   </div>
                 )}
@@ -144,6 +153,11 @@ const SalesPage = () => {
       )}
     </Droppable>
   );
+
+  // Show a loading message or spinner while customers load (optional)
+  if (isCustomersFetching) {
+    return <div>Loading customers...</div>;
+  }
 
   return (
     <div className="sales-page">
@@ -194,6 +208,7 @@ const SalesPage = () => {
                 value={formData.amount}
                 onChange={handleChange}
                 required
+                min="0"
               />
               <select
                 name="stage"
@@ -210,9 +225,7 @@ const SalesPage = () => {
                 <button
                   type="submit"
                   disabled={
-                    !formData.dealName ||
-                    !formData.customer ||
-                    !formData.amount
+                    !formData.dealName || !formData.customer || !formData.amount
                   }
                 >
                   {editMode ? "Update" : "Save"}

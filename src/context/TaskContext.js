@@ -9,10 +9,12 @@ export const TaskProvider = ({ children }) => {
   const [tasks, setTasks] = useState([]);
   const [isFetching, setIsFetching] = useState(false);
 
+  // Load tasks when user is available and not loading
   const loadTasks = useCallback(async () => {
-    if (loading) return;
+    if (loading) return; // Wait until auth is done
     if (!user) {
       console.warn("User not found. Skipping task fetch.");
+      setTasks([]); // Clear tasks if user logs out
       return;
     }
 
@@ -28,6 +30,7 @@ export const TaskProvider = ({ children }) => {
     }
   }, [user, loading]);
 
+  // Create a new task and update state
   const createTask = async (task) => {
     try {
       const newTask = await addTask(task);
@@ -37,15 +40,19 @@ export const TaskProvider = ({ children }) => {
     }
   };
 
+  // Edit existing task and update state
   const editTask = async (id, taskData) => {
     try {
       const updatedTask = await updateTask(id, taskData);
-      setTasks((prevTasks) => prevTasks.map((task) => (task._id === id ? updatedTask : task)));
+      setTasks((prevTasks) =>
+        prevTasks.map((task) => (task._id === id ? updatedTask : task))
+      );
     } catch (error) {
       console.error("Error updating task:", error);
     }
   };
 
+  // Delete task and update state
   const removeTask = async (id) => {
     try {
       await deleteTask(id);
@@ -55,15 +62,19 @@ export const TaskProvider = ({ children }) => {
     }
   };
 
+  // Load tasks on mount and when user or loading changes
   useEffect(() => {
     loadTasks();
   }, [loadTasks]);
 
   return (
-    <TaskContext.Provider value={{ tasks, loadTasks, createTask, editTask, removeTask, isFetching }}>
+    <TaskContext.Provider
+      value={{ tasks, loadTasks, createTask, editTask, removeTask, isFetching }}
+    >
       {children}
     </TaskContext.Provider>
   );
 };
 
+// Custom hook for easier use of TaskContext
 export const useTasks = () => useContext(TaskContext);

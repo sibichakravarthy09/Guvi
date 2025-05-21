@@ -1,9 +1,10 @@
 import { useContext, useState, useEffect } from "react";
 import { CustomerContext } from "../context/CustomerContext";
 import "../styles/Customers.css";
+import api from "../services/api";
 
 const Customers = () => {
-  const { customers, addCustomer, fetchCustomers } = useContext(CustomerContext);
+  const { customers, addCustomer, loadCustomers } = useContext(CustomerContext);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -54,34 +55,26 @@ const Customers = () => {
 
     try {
       if (isEdit) {
-        const res = await fetch(`http://localhost:5000/api/admin/customers/${_id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, phone, address }),
-        });
-        if (!res.ok) throw new Error("Failed to update customer.");
+        await api.put(`/customers/${_id}`, { name, phone, address });
       } else {
-        await addCustomer({ name, phone, address }); // Already in context
+        await addCustomer({ name, phone, address }); 
       }
-      fetchCustomers(); // Refresh list
+      await loadCustomers(); // Refresh the customer list after add or update
       setModalOpen(false);
     } catch (error) {
-      alert(error.message || "Something went wrong.");
+      alert(error.response?.data?.message || error.message || "Something went wrong.");
     }
   };
 
   const handleDelete = async (id) => {
-    const confirm = window.confirm("Are you sure you want to delete this customer?");
-    if (!confirm) return;
+    const confirmDelete = window.confirm("Are you sure you want to delete this customer?");
+    if (!confirmDelete) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/customers/${id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete customer.");
-      fetchCustomers();
+      await api.delete(`/customers/${id}`);
+      await loadCustomers(); // Refresh after deletion
     } catch (error) {
-      alert(error.message || "Something went wrong.");
+      alert(error.response?.data?.message || error.message || "Something went wrong.");
     }
   };
 
@@ -91,23 +84,10 @@ const Customers = () => {
     setPurchaseHistory([]);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/customers/${customerName}/purchase-history`);
-      const contentType = response.headers.get("content-type");
+      const response = await api.get(`/customers/${customerName}/purchase-history`);
+      const data = response.data;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch history: ${errorText}`);
-      }
-
-      if (contentType && contentType.includes("application/json")) {
-        const data = await response.json();
-        setPurchaseHistory(Array.isArray(data) ? data : []);
-      } else {
-        const nonJsonText = await response.text();
-        console.warn("Non-JSON response:", nonJsonText);
-        setPurchaseHistory([]);
-      }
-
+      setPurchaseHistory(Array.isArray(data) ? data : []);
       setSelectedCustomerName(customerName);
       setHistoryModalOpen(true);
     } catch (error) {
@@ -226,7 +206,6 @@ const Customers = () => {
               <table className="customer-table">
                 <thead>
                   <tr>
-                  
                     <th>Amount</th>
                     <th>Date</th>
                   </tr>
@@ -234,11 +213,14 @@ const Customers = () => {
                 <tbody>
                   {purchaseHistory.map((sale) => (
                     <tr key={sale._id}>
-                      
                       <td>₹{sale.amount}</td>
-                      <td>{new Date(sale.date).toLocaleDateString("en-IN", {
-                        year: "numeric", month: "short", day: "numeric",
-                      })}</td>
+                      <td>
+                        {new Date(sale.date).toLocaleDateString("en-IN", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext"; // <-- import AuthContext
 import Apartment from "../images/Apartment.jpg";
 import Duplex from "../images/Duplex.jpg";
 import Townhouse from "../images/Town house.jpg";
@@ -21,15 +22,21 @@ const propertyData = [
 
 const Property = () => {
   const navigate = useNavigate();
+  const { user } = useAuth(); // <-- get the logged-in user
 
   const handleMessageClick = () => {
-    navigate("/message");
+    if (user?.role === "admin") {
+      navigate("/admin/message");
+    } else if (user?.role === "lead") {
+      navigate("/lead/message");
+    } else {
+      navigate("/customer/message"); // default for users
+    }
   };
 
   return (
     <div className="property-container">
       <h2>Explore Our Service Types</h2>
-
       <div className="property-grid">
         {propertyData.map((item, index) => (
           <div className="property-card" key={index}>
@@ -40,10 +47,14 @@ const Property = () => {
         ))}
       </div>
 
+      {/* Message us link */}
       <div className="query-message">
         <p>
           If you have any queries,{" "}
-          <span onClick={handleMessageClick}>message us</span>.
+          <span className="message-link" onClick={handleMessageClick}>
+            message us
+          </span>
+          .
         </p>
       </div>
     </div>

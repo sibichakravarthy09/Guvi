@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
-import axios from "axios";
 import { TaskContext } from "../context/TaskContext";
 import "../styles/Tasks.css";
+import api from "../services/api";
 
 const Tasks = () => {
   const { tasks, createTask, editTask, removeTask } = useContext(TaskContext);
@@ -16,11 +16,11 @@ const Tasks = () => {
   });
   const [leads, setLeads] = useState([]);
 
-  // Fetch leads on component mount
+  // Fetch leads for assignment options on component mount
   useEffect(() => {
     const fetchLeads = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/leads");
+        const res = await api.get("/leads"); // Adjust endpoint as needed
         setLeads(res.data);
       } catch (err) {
         console.error("Failed to fetch leads", err);
@@ -29,18 +29,29 @@ const Tasks = () => {
     fetchLeads();
   }, []);
 
+  // Open modal for new task or editing existing task
   const handleOpenModal = (task = null) => {
     setError(null);
     setEditingTask(task);
-    setTaskData(task ? task : {
-      title: "",
-      description: "",
-      status: "pending",
-      assignedTo: "",
-    });
+    setTaskData(
+      task
+        ? {
+            title: task.title || "",
+            description: task.description || "",
+            status: task.status || "pending",
+            assignedTo: task.assignedTo || "",
+          }
+        : {
+            title: "",
+            description: "",
+            status: "pending",
+            assignedTo: "",
+          }
+    );
     setShowModal(true);
   };
 
+  // Validate and save task (create or edit)
   const handleSaveTask = async () => {
     if (!taskData.title.trim() || !taskData.description.trim()) {
       setError("Title and Description are required.");
@@ -62,43 +73,73 @@ const Tasks = () => {
   return (
     <div className="task-container">
       <h1>Tasks</h1>
-      <button className="add-btn" onClick={() => handleOpenModal()}>+ Add Task</button>
+      <button className="add-btn" onClick={() => handleOpenModal()}>
+        + Add Task
+      </button>
+
       <ul className="task-list">
         {tasks.map((task) => (
           <li key={task._id} className="task-item">
             <div>
               <strong>{task.title}</strong>
               <p>{task.description}</p>
-              <span className={`status ${task.status.toLowerCase()}`}>{task.status}</span>
-              {task.assignedTo && <p>Assigned To: {task.assignedTo}</p>}
+              <span className={`status ${task.status.toLowerCase()}`}>
+                {task.status}
+              </span>
+              {task.assignedTo && (
+                <p>
+                  Assigned To:{" "}
+                  {leads.find((lead) => lead._id === task.assignedTo)?.name ||
+                    "Unknown"}
+                </p>
+              )}
             </div>
             <div className="task-actions">
-              <button className="edit-btn" onClick={() => handleOpenModal(task)}>✏️</button>
-              <button className="delete-btn" onClick={() => removeTask(task._id)}>🗑️</button>
+              <button
+                className="edit-btn"
+                onClick={() => handleOpenModal(task)}
+                aria-label={`Edit ${task.title}`}
+              >
+                ✏️
+              </button>
+              <button
+                className="delete-btn"
+                onClick={() => removeTask(task._id)}
+                aria-label={`Delete ${task.title}`}
+              >
+                🗑️
+              </button>
             </div>
           </li>
         ))}
       </ul>
 
       {showModal && (
-        <div className="modal">
+        <div className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
           <div className="modal-content">
-            <h2>{editingTask ? "Edit Task" : "Add Task"}</h2>
+            <h2 id="modal-title">{editingTask ? "Edit Task" : "Add Task"}</h2>
             {error && <p className="error-msg">{error}</p>}
+
             <input
               type="text"
               placeholder="Title"
               value={taskData.title}
-              onChange={(e) => setTaskData({ ...taskData, title: e.target.value })}
+              onChange={(e) =>
+                setTaskData({ ...taskData, title: e.target.value })
+              }
             />
             <textarea
               placeholder="Description"
               value={taskData.description}
-              onChange={(e) => setTaskData({ ...taskData, description: e.target.value })}
+              onChange={(e) =>
+                setTaskData({ ...taskData, description: e.target.value })
+              }
             />
             <select
               value={taskData.status}
-              onChange={(e) => setTaskData({ ...taskData, status: e.target.value })}
+              onChange={(e) =>
+                setTaskData({ ...taskData, status: e.target.value })
+              }
             >
               <option value="pending">Pending</option>
               <option value="in-progress">In Progress</option>
@@ -106,17 +147,25 @@ const Tasks = () => {
             </select>
             <select
               value={taskData.assignedTo}
-              onChange={(e) => setTaskData({ ...taskData, assignedTo: e.target.value })}
+              onChange={(e) =>
+                setTaskData({ ...taskData, assignedTo: e.target.value })
+              }
             >
               <option value="">Assign to Lead</option>
               {leads.map((lead) => (
-                <option key={lead._id} value={lead.name}>
+                <option key={lead._id} value={lead._id}>
                   {lead.name}
                 </option>
               ))}
             </select>
+
             <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setShowModal(false)}>Cancel</button>
+              <button
+                className="cancel-btn"
+                onClick={() => setShowModal(false)}
+              >
+                Cancel
+              </button>
               <button className="save-btn" onClick={handleSaveTask}>
                 Save
               </button>
